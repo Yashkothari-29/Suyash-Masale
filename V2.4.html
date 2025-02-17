@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PackCalc Pro - Smart Packaging Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-light: #6366f1;
+            --secondary-light: #10b981;
+            --background-light: #f8fafc;
+            --surface-light: #ffffff;
+            --text-light: #1e293b;
+            --border-light: #e2e8f0;
+            
+            --primary-dark: #818cf8;
+            --secondary-dark: #34d399;
+            --background-dark: #0f172a;
+            --surface-dark: #1e293b;
+            --text-dark: #f8fafc;
+            --border-dark: #334155;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            transition: all 0.4s ease;
+            background: var(--background);
+            color: var(--text);
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--border);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "🌙";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background: var(--surface);
+            transition: .4s;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        input:checked + .slider:before {
+            content: "☀️";
+            transform: translateX(20px);
+        }
+
+        [data-theme="light"] {
+            --primary: var(--primary-light);
+            --secondary: var(--secondary-light);
+            --background: var(--background-light);
+            --surface: var(--surface-light);
+            --text: var(--text-light);
+            --border: var(--border-light);
+        }
+
+        [data-theme="dark"] {
+            --primary: var(--primary-dark);
+            --secondary: var(--secondary-dark);
+            --background: var(--background-dark);
+            --surface: var(--surface-dark);
+            --text: var(--text-dark);
+            --border: var(--border-dark);
+        }
+
+        .calculator {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid var(--border);
+            transition: all 0.4s ease;
+            position: relative;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .display {
+            background: var(--background);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .display::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .display-section {
+            margin: 16px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.1em;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .input-card {
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .input-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1em;
+            background: var(--surface);
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+            transform: scale(1.02);
+        }
+
+        .results {
+            margin-top: 24px;
+            padding: 24px;
+            background: var(--background);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .result-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+            padding: 16px;
+            border-radius: 8px;
+        }
+
+        .profit-highlight {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            font-weight: 700;
+            font-size: 1.4em;
+            padding: 20px;
+            animation: pulse 2s infinite, gradientShift 8s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .value {
+            font-weight: 700;
+            font-size: 1.3em;
+            color: var(--primary);
+        }
+
+        #total-display {
+            font-size: 1.6em;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 480px) {
+            .calculator {
+                padding: 24px;
+            }
+
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profit-highlight {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="calculator">
+        <div class="theme-toggle">
+            <label class="switch">
+                <input type="checkbox" id="themeToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="display">
+            <div class="display-section">
+                <span>Material Cost:</span>
+                <span class="value" id="material-display">₹0.00</span>
+            </div>
+            <div class="display-section">
+                <span>Packaging Cost:</span>
+                <span class="value" id="plastic-display">₹0.00</span>
+            </div>
+            <div class="display-section">
+                <span>Total Cost:</span>
+                <span class="value" id="total-display">₹0.00</span>
+            </div>
+        </div>
+
+        <div class="input-grid">
+            <div class="input-card">
+                <label>Price/kg (₹)</label>
+                <input type="number" id="rate-per-kg" step="0.01" placeholder="Enter price">
+            </div>
+            <div class="input-card">
+                <label>Weight (g)</label>
+                <input type="number" id="weight-per-packet" step="0.01" placeholder="Per packet">
+            </div>
+            <div class="input-card">
+                <label>Quantity</label>
+                <input type="number" id="quantity-per-packet" placeholder="Number of packets">
+            </div>
+            <div class="input-card">
+                <label>Plastic (m)</label>
+                <input type="number" id="length-of-plastic" step="0.01" placeholder="Per packet">
+            </div>
+            <div class="input-card">
+                <label>Plastic ₹/kg</label>
+                <input type="number" id="rate-of-plastic" step="0.01" placeholder="Cost per kg">
+            </div>
+        </div>
+
+        <div class="results">
+            <div class="result-line">
+                <span>Selling Price:</span>
+                <input type="number" id="selling-price" step="0.01" placeholder="Enter price">
+            </div>
+            <div class="result-line profit-highlight">
+                <span>Total Profit:</span>
+                <span id="profit-amount">₹0.00 (0%)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        themeToggle.addEventListener('change', () => {
+            const newTheme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', savedTheme);
+        themeToggle.checked = savedTheme === 'dark';
+
+        const inputs = document.querySelectorAll('input');
+        const materialDisplay = document.getElementById('material-display');
+        const plasticDisplay = document.getElementById('plastic-display');
+        const totalDisplay = document.getElementById('total-display');
+        const profitDisplay = document.getElementById('profit-amount');
+
+        function updateCalculations() {
+            const ratePerKg = parseFloat(document.getElementById('rate-per-kg').value) || 0;
+            const weight = parseFloat(document.getElementById('weight-per-packet').value) || 0;
+            const quantity = parseFloat(document.getElementById('quantity-per-packet').value) || 0;
+            const plasticLength = parseFloat(document.getElementById('length-of-plastic').value) || 0;
+            const plasticRate = parseFloat(document.getElementById('rate-of-plastic').value) || 0;
+            const sellingPrice = parseFloat(document.getElementById('selling-price').value) || 0;
+
+            const materialCost = (weight / 1000) * quantity * ratePerKg;
+            const plasticWeight = 0.0126 * plasticLength * quantity;
+            const plasticCost = (plasticWeight / 1000) * plasticRate;
+            const totalCost = materialCost + plasticCost;
+            const profit = sellingPrice - totalCost;
+            const profitPercent = totalCost > 0 ? (profit / totalCost * 100) : 0;
+
+            materialDisplay.textContent = `₹${materialCost.toFixed(2)}`;
+            plasticDisplay.textContent = `₹${plasticCost.toFixed(2)}`;
+            totalDisplay.textContent = `₹${totalCost.toFixed(2)}`;
+            profitDisplay.textContent = `₹${profit.toFixed(2)} (${profitPercent.toFixed(1)}%)`;
+        }
+
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                updateCalculations();
+                input.parentElement.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    input.parentElement.style.transform = 'scale(1)';
+                }, 100);
+            });
+        });
+
+        updateCalculations();
+    </script>
+</body>
+</html>
